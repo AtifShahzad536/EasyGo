@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
 
-    //hadi sir sath nai dy rhy  wrna kam ban jata  aheheheheh
+    //hadi sir  ko biwi na mily jinho ny github per uplaod krny ko bola
     if (auth()->check()) {
         
         
