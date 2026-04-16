@@ -18,7 +18,10 @@
         "requiredExtensions": {
             "codexEditor": "0.24.0",
             "frontierAuthentication": "0.4.24"
-        }
+        },
+        "validationCount": 1,
+        "validationCountAudio": 1,
+        "abbreviation": ""
     },
     "idAuthorities": {},
     "identification": {},
@@ -110,5 +113,47 @@
     "ingredients": {},
     "copyright": {
         "shortStatements": []
-    }
+    },
+    "edits": [
+        {
+            "editMap": [
+                "meta",
+                "validationCount"
+            ],
+            "value": 1,
+            "timestamp": 1776066326887,
+            "type": "user-edit",
+            "author": "atif"
+        },
+        {
+            "editMap": [
+                "meta",
+                "validationCountAudio"
+            ],
+            "value": 1,
+            "timestamp": 1776066326887,
+            "type": "user-edit",
+            "author": "atif"
+        },
+        {
+            "editMap": [
+                "meta",
+                "abbreviation"
+            ],
+            "value": "",
+            "timestamp": 1776066326887,
+            "type": "user-edit",
+            "author": "atif"
+        },
+        {
+            "editMap": [
+                "spellcheckIsEnabled"
+            ],
+            "value": false,
+            "timestamp": 1776066326887,
+            "type": "user-edit",
+            "author": "atif"
+        }
+    ],
+    "spellcheckIsEnabled": false
 }
