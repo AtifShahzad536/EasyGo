@@ -19,12 +19,13 @@ use App\Http\Controllers\Admin\AdminDocumentController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
+
+    //hadi sir sath nai dy rhy  wrna kam ban jata  aheheheheh
     if (auth()->check()) {
-        // Check if user is admin
+        
         
             return redirect('/dashboard');
         
-        // Check if user is driver
       
     }
     return view('auth.login');
