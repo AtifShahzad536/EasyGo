@@ -127,6 +127,7 @@ class ApiAuthController extends Controller
     private function registerDriver(Request $request)
     {
         $validator = Validator::make($request->all(), [
+            // Driver Profile Data
             'full_name'      => 'required|string|max:255',
             'mobile_number'  => 'required|string|unique:drivers,mobile_number',
             'cnic'           => 'required|string|unique:drivers,cnic',
@@ -135,6 +136,28 @@ class ApiAuthController extends Controller
             'date_of_birth'  => 'required|date',
             'gender'         => 'required|in:male,female,other',
             'profile_photo'  => 'nullable|image|max:2048',
+            
+            // Vehicle Data
+            'vehicle'           => 'required|array',
+            'vehicle.make'      => 'required|string|max:255',
+            'vehicle.model'     => 'required|string|max:255',
+            'vehicle.color'     => 'required|string|max:255',
+            'vehicle.plate_number'=> 'required|string|max:20',
+            'vehicle.type'      => 'required|in:bike,auto,economy_car,comfort_car',
+            'vehicle.year'      => 'required|integer|min:2000|max:' . (date('Y') + 1),
+            
+            // Documents Data
+            'documents'              => 'required|array',
+            'documents.cnic_front' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'documents.cnic_back'    => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'documents.license_front'=> 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'documents.license_back' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'documents.vehicle_registration' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'documents.insurance'  => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ], [
+            'vehicle.required' => 'Vehicle details are required for driver registration',
+            'documents.required' => 'All documents are required for driver registration',
+            'documents.*.required' => 'All documents are required',
         ]);
 
         if ($validator->fails()) {
@@ -147,8 +170,10 @@ class ApiAuthController extends Controller
 
         try {
             return DB::transaction(function () use ($request) {
-                $data             = $request->except(['profile_photo', 'role']);
+                // 1. Create Driver
+                $data             = $request->except(['profile_photo', 'role', 'vehicle', 'documents']);
                 $data['password'] = Hash::make(Str::random(16));
+                $data['status']   = 'pending_verification';
 
                 if ($request->hasFile('profile_photo')) {
                     $data['profile_photo'] = $request->file('profile_photo')->store('profile_photos/drivers', 'public');
@@ -156,29 +181,71 @@ class ApiAuthController extends Controller
 
                 $driver = Driver::create($data);
 
-                // Create empty statistics record for the driver
+                // 2. Create Statistics Record
                 $driver->statistics()->create([]);
 
-                $token = $driver->createToken('auth_token')->plainTextToken;
+                // 3. Create Vehicle
+                $vehicleData = $request->input('vehicle');
+                $vehicle = $driver->vehicle()->create([
+                    'make'          => $vehicleData['make'],
+                    'model'         => $vehicleData['model'],
+                    'color'         => $vehicleData['color'],
+                    'plate_number'  => $vehicleData['plate_number'],
+                    'type'          => $vehicleData['type'],
+                    'year'          => $vehicleData['year'],
+                    'is_active'     => false, // Inactive until documents verified
+                ]);
 
-                // Store token in session_token column
+                // 4. Upload Documents
+                $uploadedDocuments = [];
+                $documentTypes = [
+                    'cnic_front', 'cnic_back', 
+                    'license_front', 'license_back',
+                    'vehicle_registration', 'insurance'
+                ];
+
+                foreach ($documentTypes as $docType) {
+                    if ($request->hasFile("documents.{$docType}")) {
+                        $file = $request->file("documents.{$docType}");
+                        $filename = $docType . '_' . time() . '.' . $file->getClientOriginalExtension();
+                        $path = $file->storeAs("driver_documents/{$driver->id}", $filename, 'public');
+
+                        $document = $driver->documents()->create([
+                            'type'      => $docType,
+                            'file_path' => $path,
+                            'status'    => 'pending',
+                        ]);
+
+                        $uploadedDocuments[] = $document;
+                    }
+                }
+
+                // 5. Generate Token
+                $token = $driver->createToken('auth_token')->plainTextToken;
                 $driver->session_token = $token;
                 $driver->remember_token = Str::random(60);
                 $driver->save();
 
-                // Prepare user data with full URL for profile photo
-                $userData = $driver->load('statistics')->toArray();
+                // Prepare response data
+                $userData = $driver->load(['statistics', 'vehicle', 'documents'])->toArray();
                 if ($driver->profile_photo) {
                     $userData['profile_photo_url'] = asset('storage/' . $driver->profile_photo);
                 }
 
                 return response()->json([
                     'status'       => 'success',
-                    'message'      => 'Driver registered successfully',
+                    'message'      => 'Driver registered successfully with vehicle and documents',
                     'access_token' => $token,
                     'token_type'   => 'Bearer',
                     'role'         => 'driver',
                     'user'         => $userData,
+                    'registration_summary' => [
+                        'driver_id'          => $driver->id,
+                        'vehicle_id'         => $vehicle->id,
+                        'documents_uploaded' => count($uploadedDocuments),
+                        'status'             => 'pending_verification',
+                        'next_step'          => 'Wait for admin verification',
+                    ],
                 ], 201);
             });
         } catch (Throwable $e) {
