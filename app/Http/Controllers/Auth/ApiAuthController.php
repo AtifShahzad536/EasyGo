@@ -261,11 +261,11 @@ class ApiAuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'full_name'      => 'required|string|max:255',
-            'display_name'   => 'nullable|string|max:255',
+            'display_name'   => 'required|string|max:255',
             'mobile_number'  => 'required|string|unique:riders,mobile_number',
             'email'          => 'nullable|email|unique:riders,email',
-            'gender'         => 'nullable|in:male,female,other',
-            'date_of_birth'  => 'nullable|date',
+            'gender'         => 'required|in:male,female,other',
+            'date_of_birth'  => 'required|date',
             'profile_photo'  => 'nullable|image|max:2048',
         ]);
 
