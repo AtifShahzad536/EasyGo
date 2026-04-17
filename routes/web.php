@@ -19,14 +19,9 @@ use App\Http\Controllers\Admin\AdminDocumentController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-
     //hadi sir  ko biwi na mily jinho ny github per uplaod krny ko bola
     if (auth()->check()) {
-        
-        
             return redirect('/dashboard');
-        
-      
     }
     return view('auth.login');
 });

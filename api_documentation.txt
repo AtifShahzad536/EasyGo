@@ -1,0 +1,722 @@
+================================================================================
+                         EASYGO API DOCUMENTATION
+                         Base URL: http://192.168.1.37:8000
+================================================================================
+
+================================================================================
+                        AUTHENTICATION APIS (PUBLIC)
+================================================================================
+
+1. DRIVER REGISTER
+   POST http://192.168.1.37:8000/api/v1/auth/register
+   
+   Headers:
+   Content-Type: multipart/form-data
+   
+   Body (form-data):
+   - role: driver (required)
+   - full_name: string (required, max 255)
+   - mobile_number: string (required, unique)
+   - cnic: string (required, unique)
+   - cnic_name: string (required, max 255)
+   - email: string (optional, unique)
+   - date_of_birth: date (required, YYYY-MM-DD)
+   - gender: male/female/other (required)
+   - profile_photo: file (optional, image, max 2MB)
+   
+   Response: {
+     "status": "success",
+     "message": "Driver registered successfully",
+     "access_token": "token_here",
+     "token_type": "Bearer",
+     "role": "driver",
+     "user": { ...user_data with profile_photo_url... }
+   }
+
+--------------------------------------------------------------------------------
+
+2. RIDER REGISTER
+   POST http://192.168.1.37:8000/api/v1/auth/register
+   
+   Headers:
+   Content-Type: multipart/form-data
+   
+   Body (form-data):
+   - role: rider (required)
+   - full_name: string (required, max 255)
+   - mobile_number: string (required, unique)
+   - display_name: string (optional, max 255)
+   - email: string (optional, unique)
+   - gender: male/female/other (optional)
+   - date_of_birth: date (optional, YYYY-MM-DD)
+   - profile_photo: file (optional, image, max 2MB)
+   
+   Response: {
+     "status": "success",
+     "message": "Rider registered successfully",
+     "access_token": "token_here",
+     "token_type": "Bearer",
+     "role": "rider",
+     "user": { ...user_data with profile_photo_url... }
+   }
+
+--------------------------------------------------------------------------------
+
+3. LOGIN
+   POST http://192.168.1.37:8000/api/v1/auth/login
+   
+   Headers:
+   Content-Type: application/json
+   
+   Body:
+   {
+     "mobile_number": "03001234567",
+     "role": "driver"  // or "rider"
+   }
+   
+   Response: {
+     "status": "success",
+     "message": "Login successful",
+     "access_token": "token_here",
+     "token_type": "Bearer",
+     "role": "driver",
+     "user": { ...user_data with profile_photo_url... }
+   }
+
+--------------------------------------------------------------------------------
+
+4. CHECK DRIVER PHONE EXISTS
+   POST http://192.168.1.37:8000/api/v1/auth/check-driver-phone
+   
+   Headers:
+   Content-Type: application/json
+   
+   Body:
+   {
+     "mobile_number": "03001234567"
+   }
+   
+   Response (if exists - 409):
+   {
+     "status": "error",
+     "message": "This phone number is already registered. Please choose a different number.",
+     "exists": true
+   }
+   
+   Response (if available - 200):
+   {
+     "status": "success",
+     "message": "Phone number is available",
+     "exists": false
+   }
+
+--------------------------------------------------------------------------------
+
+5. CHECK RIDER PHONE EXISTS
+   POST http://192.168.1.37:8000/api/v1/auth/check-rider-phone
+   
+   Headers:
+   Content-Type: application/json
+   
+   Body:
+   {
+     "mobile_number": "03001234567"
+   }
+   
+   Response (if exists - 409):
+   {
+     "status": "error",
+     "message": "This phone number is already registered. Please choose a different number.",
+     "exists": true
+   }
+   
+   Response (if available - 200):
+   {
+     "status": "success",
+     "message": "Phone number is available",
+     "exists": false
+   }
+
+================================================================================
+                        DRIVER PROTECTED APIS (NEED TOKEN)
+                    Authorization: Bearer YOUR_ACCESS_TOKEN
+================================================================================
+
+6. GET DRIVER PROFILE (ME)
+   GET http://192.168.1.37:8000/api/v1/driver/me
+   
+   Headers:
+   Authorization: Bearer {token}
+   Accept: application/json
+   
+   Response: {
+     "user": {
+       "id": 1,
+       "full_name": "Zaeem",
+       "mobile_number": "03474979594",
+       "email": null,
+       "profile_photo": "profile_photos/drivers/xxxxx.jpg",
+       "profile_photo_url": "http://192.168.1.37:8000/storage/profile_photos/drivers/xxxxx.jpg",
+       "cnic": "3460380326605",
+       "cnic_name": "Zaeem Ahmed",
+       "date_of_birth": "1990-01-01",
+       "gender": "male",
+       "status": "online",
+       "is_available": true
+     },
+     "role": "driver"
+   }
+
+--------------------------------------------------------------------------------
+
+7. REGISTER VEHICLE (Driver must be logged in)
+   POST http://192.168.1.37:8000/api/v1/driver/vehicle/register
+   
+   Headers:
+   Authorization: Bearer {token}
+   Content-Type: application/json
+   
+   Body:
+   {
+     "vehicle_type": "car",
+     "make": "Toyota",
+     "model": "Corolla",
+     "year": 2020,
+     "color": "White",
+     "license_plate": "ABC-123",
+     "seating_capacity": 4
+   }
+   
+   Response: {
+     "status": "success",
+     "message": "Vehicle registered successfully",
+     "vehicle": { ...vehicle_data... }
+   }
+
+--------------------------------------------------------------------------------
+
+8. UPLOAD DRIVER DOCUMENTS
+   POST http://192.168.1.37:8000/api/v1/driver/documents/upload
+   
+   Headers:
+   Authorization: Bearer {token}
+   Content-Type: multipart/form-data
+   
+   Body (form-data):
+   - documents[0][type]: cnic_front
+   - documents[0][file]: file
+   - documents[1][type]: cnic_back
+   - documents[1][file]: file
+   - documents[2][type]: driving_license
+   - documents[2][file]: file
+   
+   Response: {
+     "status": "success",
+     "message": "Documents uploaded successfully",
+     "data": [ ...uploaded_documents... ]
+   }
+
+================================================================================
+                        DRIVER STATUS APIS
+================================================================================
+
+9. GET DRIVER STATUS
+   GET http://192.168.1.37:8000/api/v1/driver/status
+   
+   Headers:
+   Authorization: Bearer {token}
+   Accept: application/json
+   
+   Response: {
+     "status": "success",
+     "data": {
+       "driver_id": 1,
+       "status": "online",
+       "is_available": true,
+       "last_updated": "2025-04-15 12:30:00"
+     }
+   }
+
+--------------------------------------------------------------------------------
+
+10. UPDATE DRIVER STATUS
+    POST http://192.168.1.37:8000/api/v1/driver/status/update
+    
+    Headers:
+    Authorization: Bearer {token}
+    Content-Type: application/json
+    
+    Body:
+    {
+      "status": "online"  // online, offline, busy, on_ride, inactive
+    }
+    
+    Response: {
+      "status": "success",
+      "message": "Driver status updated successfully",
+      "data": {
+        "driver_id": 1,
+        "status": "online",
+        "is_available": true,
+        "updated_at": "2025-04-15 12:30:00"
+      }
+    }
+
+================================================================================
+                        LOCATION APIS (DRIVER & RIDER)
+================================================================================
+
+11. UPDATE DRIVER LOCATION
+    POST http://192.168.1.37:8000/api/v1/driver/location/update
+    
+    Headers:
+    Authorization: Bearer {driver_token}
+    Content-Type: application/json
+    
+    Body:
+    {
+      "latitude": 31.5204,
+      "longitude": 74.3587,
+      "place_name": "Lahore, Pakistan"
+    }
+    
+    Response: {
+      "status": "success",
+      "message": "Location updated successfully",
+      "data": {
+        "user_id": 1,
+        "role": "driver",
+        "latitude": 31.5204,
+        "longitude": 74.3587,
+        "place_name": "Lahore, Pakistan",
+        "updated_at": "2025-04-15 12:30:00"
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+12. GET DRIVER LOCATION
+    GET http://192.168.1.37:8000/api/v1/driver/location
+    
+    Headers:
+    Authorization: Bearer {driver_token}
+    Accept: application/json
+    
+    Response: {
+      "status": "success",
+      "data": {
+        "user_id": 1,
+        "role": "driver",
+        "latitude": 31.5204,
+        "longitude": 74.3587,
+        "place_name": "Lahore, Pakistan",
+        "updated_at": "2025-04-15 12:30:00"
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+13. UPDATE RIDER LOCATION
+    POST http://192.168.1.37:8000/api/v1/rider/location/update
+    
+    Headers:
+    Authorization: Bearer {rider_token}
+    Content-Type: application/json
+    
+    Body:
+    {
+      "latitude": 31.5204,
+      "longitude": 74.3587,
+      "place_name": "Lahore, Pakistan"
+    }
+    
+    Response: Same as driver location update
+
+--------------------------------------------------------------------------------
+
+14. GET RIDER LOCATION
+    GET http://192.168.1.37:8000/api/v1/rider/location
+    
+    Headers:
+    Authorization: Bearer {rider_token}
+    Accept: application/json
+    
+    Response: Same as driver location get
+
+--------------------------------------------------------------------------------
+
+15. FIND NEARBY DRIVERS (For Rider)
+    GET http://192.168.1.37:8000/api/v1/rider/drivers/nearby?latitude=31.5204&longitude=74.3587&radius=5
+    
+    Headers:
+    Authorization: Bearer {rider_token}
+    Accept: application/json
+    
+    Query Parameters:
+    - latitude: Current latitude (required)
+    - longitude: Current longitude (required)
+    - radius: Search radius in km (optional, default 5km)
+    
+    Response: {
+      "status": "success",
+      "data": {
+        "total_found": 3,
+        "search_radius_km": 5,
+        "drivers": [
+          {
+            "user_id": 1,
+            "latitude": 31.5204,
+            "longitude": 74.3587,
+            "place_name": "Lahore",
+            "distance": 0.5
+          }
+        ]
+      }
+    }
+
+================================================================================
+                        DRIVER STATISTICS APIS
+================================================================================
+
+17. GET MY STATISTICS
+    GET http://192.168.1.37:8000/api/v1/driver/statistics
+    
+    Headers:
+    Authorization: Bearer {token}
+    Accept: application/json
+    
+    Response: {
+      "status": "success",
+      "data": {
+        "total_trips": 150,
+        "total_earnings": 45000.00,
+        "wallet_balance": 12000.00,
+        "average_rating": 4.8,
+        "completion_rate": 95.5
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+12. GET DASHBOARD SUMMARY
+    GET http://192.168.1.37:8000/api/v1/driver/statistics/dashboard
+    
+    Headers:
+    Authorization: Bearer {token}
+    Accept: application/json
+    
+    Response: {
+      "status": "success",
+      "data": {
+        "today_trips": 5,
+        "today_earnings": 1500.00,
+        "weekly_trips": 25,
+        "weekly_earnings": 7500.00,
+        "rating": 4.8
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+18. GET TRIP STATISTICS
+    GET http://192.168.1.37:8000/api/v1/driver/statistics/trips
+    
+    Headers:
+    Authorization: Bearer {token}
+    Accept: application/json
+    
+    Response: {
+      "status": "success",
+      "data": {
+        "completed_trips": 150,
+        "cancelled_trips": 5,
+        "total_distance": 2500.50
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+19. GET EARNINGS HISTORY
+    GET http://192.168.1.37:8000/api/v1/driver/statistics/earnings
+    
+    Headers:
+    Authorization: Bearer {token}
+    Accept: application/json
+    
+    Response: {
+      "status": "success",
+      "data": [
+        {
+          "date": "2025-04-15",
+          "amount": 1500.00,
+          "trips": 5
+        }
+      ]
+    }
+
+--------------------------------------------------------------------------------
+
+20. UPDATE STATISTICS
+    POST http://192.168.1.37:8000/api/v1/driver/statistics/update
+    
+    Headers:
+    Authorization: Bearer {token}
+    Content-Type: application/json
+    
+    Body:
+    {
+      "total_trips": 151,
+      "total_earnings": 46500.00,
+      "wallet_balance": 12500.00,
+      "average_rating": 4.9
+    }
+    
+    Response: {
+      "status": "success",
+      "message": "Statistics updated successfully",
+      "data": { ...updated_stats... }
+    }
+
+================================================================================
+                        RIDER PROTECTED APIS (NEED TOKEN)
+                    Authorization: Bearer YOUR_ACCESS_TOKEN
+================================================================================
+
+25. GET RIDER PROFILE (ME)
+    GET http://192.168.1.37:8000/api/v1/rider/me
+    
+    Headers:
+    Authorization: Bearer {token}
+    Accept: application/json
+    
+    Response: {
+      "user": {
+        "id": 1,
+        "full_name": "Ali Khan",
+        "display_name": "Ali",
+        "mobile_number": "03001234567",
+        "email": "ali@example.com",
+        "profile_photo": "profile_photos/riders/xxxxx.jpg",
+        "profile_photo_url": "http://192.168.1.37:8000/storage/profile_photos/riders/xxxxx.jpg",
+        "gender": "male",
+        "date_of_birth": "1995-05-15"
+      },
+      "role": "rider"
+    }
+
+================================================================================
+                        CARPOOL RIDE APIS (DRIVER)
+                    Authorization: Bearer YOUR_DRIVER_TOKEN
+================================================================================
+
+21. PUBLISH CARPOOL RIDE
+    POST http://192.168.1.37:8000/api/v1/driver/carpool/publish
+    
+    Headers:
+    Authorization: Bearer {driver_token}
+    Content-Type: application/json
+    
+    Body:
+    {
+      "from_city": "Lahore",
+      "to_city": "Islamabad",
+      "ride_date": "2025-04-20",
+      "ride_time": "08:30",
+      "available_seats": 2,
+      "fare_per_seat": 1000,
+      "notes": "Non-smoking car, AC available"
+    }
+    
+    Response: {
+      "status": "success",
+      "message": "Carpool ride published successfully",
+      "data": {
+        "ride_id": 1,
+        "from_city": "Lahore",
+        "to_city": "Islamabad",
+        "ride_date": "2025-04-20",
+        "ride_time": "08:30",
+        "available_seats": 2,
+        "fare_per_seat": 1000.00,
+        "notes": "Non-smoking car, AC available",
+        "status": "active",
+        "created_at": "2025-04-16 10:00:00"
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+22. GET MY PUBLISHED CARPOOL RIDES
+    GET http://192.168.1.37:8000/api/v1/driver/carpool/my-rides
+    
+    Headers:
+    Authorization: Bearer {driver_token}
+    Accept: application/json
+    
+    Response: {
+      "status": "success",
+      "data": {
+        "total_rides": 3,
+        "rides": [
+          {
+            "ride_id": 1,
+            "from_city": "Lahore",
+            "to_city": "Islamabad",
+            "ride_date": "10 Apr 2025",
+            "ride_time": "08:30 AM",
+            "available_seats": 2,
+            "fare_per_seat": 1000,
+            "notes": "Non-smoking car",
+            "status": "active",
+            "created_at": "2025-04-15 10:00:00"
+          }
+        ]
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+23. CANCEL CARPOOL RIDE
+    POST http://192.168.1.37:8000/api/v1/driver/carpool/cancel/{rideId}
+    
+    Headers:
+    Authorization: Bearer {driver_token}
+    Accept: application/json
+    
+    Example: /api/v1/driver/carpool/cancel/1
+    
+    Response: {
+      "status": "success",
+      "message": "Ride cancelled successfully",
+      "data": {
+        "ride_id": 1,
+        "status": "cancelled"
+      }
+    }
+
+================================================================================
+                        CARPOOL RIDE APIS (RIDER)
+                    Authorization: Bearer YOUR_RIDER_TOKEN
+================================================================================
+
+24. SEARCH AVAILABLE CARPOOL RIDES
+    GET http://192.168.1.37:8000/api/v1/rider/carpool/search
+    
+    Headers:
+    Authorization: Bearer {rider_token}
+    Accept: application/json
+    
+    Query Parameters (optional):
+    ?from_city=Lahore&to_city=Islamabad&ride_date=2025-04-20
+    
+    Response: {
+      "status": "success",
+      "data": {
+        "total_rides": 5,
+        "rides": [
+          {
+            "ride_id": 1,
+            "from_city": "Lahore",
+            "to_city": "Islamabad",
+            "ride_date": "20 Apr 2025",
+            "ride_time": "08:30 AM",
+            "available_seats": 2,
+            "fare_per_seat": 1000,
+            "notes": "Non-smoking car",
+            "driver": {
+              "driver_id": 1,
+              "full_name": "Zaeem Ahmed",
+              "profile_photo": "profile_photos/drivers/xxxxx.jpg"
+            }
+          }
+        ]
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+25. EDIT CARPOOL RIDE
+    PUT http://192.168.1.37:8000/api/v1/driver/carpool/edit/{rideId}
+    
+    Headers:
+    Authorization: Bearer {driver_token}
+    Content-Type: application/json
+    
+    Example: /api/v1/driver/carpool/edit/1
+    
+    Body (only send fields you want to update):
+    {
+      "from_city": "Karachi",
+      "to_city": "Lahore",
+      "ride_date": "2025-04-25",
+      "ride_time": "10:00",
+      "available_seats": 3,
+      "fare_per_seat": 1200,
+      "notes": "Updated: AC available, WiFi included"
+    }
+    
+    Response: {
+      "status": "success",
+      "message": "Ride updated successfully",
+      "data": {
+        "ride_id": 1,
+        "from_city": "Karachi",
+        "to_city": "Lahore",
+        "ride_date": "2025-04-25",
+        "ride_time": "10:00",
+        "available_seats": 3,
+        "fare_per_seat": 1200,
+        "notes": "Updated: AC available, WiFi included",
+        "status": "active",
+        "updated_at": "2025-04-16 11:00:00"
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+26. DELETE CARPOOL RIDE
+    DELETE http://192.168.1.37:8000/api/v1/driver/carpool/delete/{rideId}
+    
+    Headers:
+    Authorization: Bearer {driver_token}
+    Accept: application/json
+    
+    Example: /api/v1/driver/carpool/delete/1
+    
+    Response: {
+      "status": "success",
+      "message": "Ride deleted permanently",
+      "data": {
+        "ride_id": 1,
+        "deleted": true
+      }
+    }
+
+================================================================================
+                              ERROR CODES
+================================================================================
+
+200 - Success
+201 - Created
+401 - Unauthorized (Invalid or missing token)
+403 - Forbidden (Not allowed, e.g., rider trying driver action)
+404 - Not Found
+409 - Conflict (e.g., phone number already exists, ride already cancelled)
+422 - Validation Error
+500 - Internal Server Error
+
+================================================================================
+                              NOTES
+================================================================================
+
+1. All protected APIs require Bearer token in Authorization header
+2. Token obtained from login or register APIs
+3. Profile photos returned as full URLs for direct use in mobile apps
+4. All dates in YYYY-MM-DD format
+5. All amounts in PKR (Pakistani Rupees)
+6. Carpool rides require driver to be verified before publishing
+7. Time format is 24-hour (HH:MM)
+
+================================================================================
+                        LAST UPDATED: April 16, 2025
+================================================================================
