@@ -16,8 +16,8 @@
         "normalization": "NFC",
         "comments": [],
         "requiredExtensions": {
-            "codexEditor": "0.24.0",
-            "frontierAuthentication": "0.4.24"
+            "codexEditor": "0.25.0",
+            "frontierAuthentication": "0.5.0"
         },
         "validationCount": 1,
         "validationCountAudio": 1,
@@ -155,5 +155,12 @@
             "author": "atif"
         }
     ],
-    "spellcheckIsEnabled": false
+    "spellcheckIsEnabled": false,
+    "users": [
+        {
+            "userName": "atif",
+            "codexVersion": "1.110.1",
+            "updatedAt": 1776405430212
+        }
+    ]
 }

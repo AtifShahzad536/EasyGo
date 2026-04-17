@@ -1,7 +1,7 @@
 <aside 
     id="sidebar"
     class="fixed inset-y-0 left-0 z-[50] w-72 bg-[#1C69D4] text-white flex flex-col h-screen shadow-2xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:flex shrink-0 lg:relative overflow-hidden"
-    :class="mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'"
+    :class="mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
     x-cloak>
     <!-- Animated Mirror BG Effect -->
     <div class="absolute top-0 left-0 w-full h-[180px] bg-gradient-to-br from-[#2B83F2] to-[#1C69D4] opacity-50 pointer-events-none"></div>
