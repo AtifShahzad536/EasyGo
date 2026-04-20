@@ -493,7 +493,6 @@
       "user": {
         "id": 1,
         "full_name": "Ali Khan",
-        "display_name": "Ali",
         "mobile_number": "03001234567",
         "email": "ali@example.com",
         "profile_photo": "profile_photos/riders/xxxxx.jpg",
@@ -505,11 +504,72 @@
     }
 
 ================================================================================
+                        RIDER PROFILE APIS
+                    Authorization: Bearer YOUR_RIDER_TOKEN
+================================================================================
+
+20A. GET RIDER PROFILE (Without display_name)
+    GET http://192.168.1.37:8000/api/v1/rider/profile
+    
+    Headers:
+    Authorization: Bearer {rider_token}
+    Accept: application/json
+    
+    Response: {
+      "status": "success",
+      "data": {
+        "id": 1,
+        "full_name": "Ali Khan",
+        "mobile_number": "03001234567",
+        "email": "ali@example.com",
+        "profile_photo": "http://192.168.1.37:8000/storage/profile_photos/riders/xxxxx.jpg",
+        "gender": "male",
+        "date_of_birth": "1995-05-15",
+        "is_active": true,
+        "created_at": "2025-04-01 10:00:00"
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+20B. UPDATE RIDER PROFILE
+    POST http://192.168.1.37:8000/api/v1/rider/profile/update
+    
+    Headers:
+    Authorization: Bearer {rider_token}
+    Content-Type: multipart/form-data
+    Accept: application/json
+    
+    Body (send only fields you want to update):
+    {
+      "full_name": "Ali Khan Updated",
+      "email": "ali.new@example.com",
+      "gender": "male",
+      "date_of_birth": "1995-05-15",
+      "profile_photo": [file upload]
+    }
+    
+    Response: {
+      "status": "success",
+      "message": "Profile updated successfully",
+      "data": {
+        "id": 1,
+        "full_name": "Ali Khan Updated",
+        "mobile_number": "03001234567",
+        "email": "ali.new@example.com",
+        "profile_photo": "http://192.168.1.37:8000/storage/profile_photos/riders/xxxxx.jpg",
+        "gender": "male",
+        "date_of_birth": "1995-05-15",
+        "updated_at": "2025-04-20 11:30:00"
+      }
+    }
+
+================================================================================
                         CARPOOL RIDE APIS (DRIVER)
                     Authorization: Bearer YOUR_DRIVER_TOKEN
 ================================================================================
 
-21. PUBLISH CARPOOL RIDE
+21. PUBLISH CARPOOL RIDE (Location-Based)
     POST http://192.168.1.37:8000/api/v1/driver/carpool/publish
     
     Headers:
@@ -518,8 +578,13 @@
     
     Body:
     {
-      "from_city": "Lahore",
-      "to_city": "Islamabad",
+      "vehicle_id": 1,                          // Optional: specific vehicle
+      "origin_address": "Johar Town, Lahore",
+      "origin_lat": 31.5204,
+      "origin_lng": 74.3587,
+      "destination_address": "Blue Area, Islamabad",
+      "destination_lat": 33.6844,
+      "destination_lng": 73.0479,
       "ride_date": "2025-04-20",
       "ride_time": "08:30",
       "available_seats": 2,
@@ -532,8 +597,18 @@
       "message": "Carpool ride published successfully",
       "data": {
         "ride_id": 1,
-        "from_city": "Lahore",
-        "to_city": "Islamabad",
+        "driver_id": 3,
+        "vehicle_id": 1,
+        "origin": {
+          "address": "Johar Town, Lahore",
+          "lat": 31.5204,
+          "lng": 74.3587
+        },
+        "destination": {
+          "address": "Blue Area, Islamabad",
+          "lat": 33.6844,
+          "lng": 73.0479
+        },
         "ride_date": "2025-04-20",
         "ride_time": "08:30",
         "available_seats": 2,
@@ -560,8 +635,16 @@
         "rides": [
           {
             "ride_id": 1,
-            "from_city": "Lahore",
-            "to_city": "Islamabad",
+            "origin": {
+              "address": "Johar Town, Lahore",
+              "lat": 31.5204,
+              "lng": 74.3587
+            },
+            "destination": {
+              "address": "Blue Area, Islamabad",
+              "lat": 33.6844,
+              "lng": 73.0479
+            },
             "ride_date": "10 Apr 2025",
             "ride_time": "08:30 AM",
             "available_seats": 2,
@@ -599,15 +682,14 @@
                     Authorization: Bearer YOUR_RIDER_TOKEN
 ================================================================================
 
-24. SEARCH AVAILABLE CARPOOL RIDES
+24. SEARCH AVAILABLE CARPOOL RIDES (Location-Based)
     GET http://192.168.1.37:8000/api/v1/rider/carpool/search
-    
     Headers:
     Authorization: Bearer {rider_token}
     Accept: application/json
     
     Query Parameters (optional):
-    ?from_city=Lahore&to_city=Islamabad&ride_date=2025-04-20
+    ?origin_lat=31.5204&origin_lng=74.3587&destination_lat=33.6844&destination_lng=73.0479&ride_date=2025-04-20
     
     Response: {
       "status": "success",
@@ -616,8 +698,16 @@
         "rides": [
           {
             "ride_id": 1,
-            "from_city": "Lahore",
-            "to_city": "Islamabad",
+            "origin": {
+              "address": "Johar Town, Lahore",
+              "lat": 31.5204,
+              "lng": 74.3587
+            },
+            "destination": {
+              "address": "Blue Area, Islamabad",
+              "lat": 33.6844,
+              "lng": 73.0479
+            },
             "ride_date": "20 Apr 2025",
             "ride_time": "08:30 AM",
             "available_seats": 2,
@@ -627,6 +717,11 @@
               "driver_id": 1,
               "full_name": "Zaeem Ahmed",
               "profile_photo": "profile_photos/drivers/xxxxx.jpg"
+            },
+            "vehicle": {
+              "vehicle_id": 1,
+              "model": "Toyota Corolla",
+              "plate_number": "LHR-1234"
             }
           }
         ]
@@ -635,7 +730,7 @@
 
 --------------------------------------------------------------------------------
 
-25. EDIT CARPOOL RIDE
+25. EDIT CARPOOL RIDE (Location-Based)
     PUT http://192.168.1.37:8000/api/v1/driver/carpool/edit/{rideId}
     
     Headers:
@@ -646,8 +741,13 @@
     
     Body (only send fields you want to update):
     {
-      "from_city": "Karachi",
-      "to_city": "Lahore",
+      "vehicle_id": 2,
+      "origin_address": "Johar Town, Lahore",
+      "origin_lat": 31.5204,
+      "origin_lng": 74.3587,
+      "destination_address": "Blue Area, Islamabad",
+      "destination_lat": 33.6844,
+      "destination_lng": 73.0479,
       "ride_date": "2025-04-25",
       "ride_time": "10:00",
       "available_seats": 3,
@@ -660,15 +760,24 @@
       "message": "Ride updated successfully",
       "data": {
         "ride_id": 1,
-        "from_city": "Karachi",
-        "to_city": "Lahore",
+        "vehicle_id": 2,
+        "origin": {
+          "address": "Johar Town, Lahore",
+          "lat": 31.5204,
+          "lng": 74.3587
+        },
+        "destination": {
+          "address": "Blue Area, Islamabad",
+          "lat": 33.6844,
+          "lng": 73.0479
+        },
         "ride_date": "2025-04-25",
         "ride_time": "10:00",
         "available_seats": 3,
         "fare_per_seat": 1200,
         "notes": "Updated: AC available, WiFi included",
         "status": "active",
-        "updated_at": "2025-04-16 11:00:00"
+        "updated_at": "2025-04-20 10:30:00"
       }
     }
 
@@ -690,6 +799,379 @@
         "ride_id": 1,
         "deleted": true
       }
+    }
+
+================================================================================
+                    RIDER LOCATION APIS (NEW)
+================================================================================
+
+27. GET DESTINATION SCREEN DATA (Combined: Saved Places + Recent Searches)
+    GET http://192.168.1.37:8000/api/v1/rider/destination-screen
+    
+    Headers:
+    Authorization: Bearer {rider_token}
+    Accept: application/json
+    
+    Response: {
+      "status": "success",
+      "data": {
+        "current_location": {
+          "address": "Johar Town, Lahore",
+          "latitude": null,
+          "longitude": null
+        },
+        "saved_places": {
+          "home": {...},
+          "work": {...},
+          "others": [...]
+        },
+        "recent_searches": [...],
+        "max_stops_allowed": 4
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+28. GET SAVED PLACES
+    GET http://192.168.1.37:8000/api/v1/rider/saved-places
+    
+    Headers:
+    Authorization: Bearer {rider_token}
+    Accept: application/json
+    
+    Response: {
+      "status": "success",
+      "data": {
+        "common": [Home, Work places],
+        "custom": [Other saved places]
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+29. SAVE PLACE (Home/Work/Custom)
+    POST http://192.168.1.37:8000/api/v1/rider/saved-places
+    
+    Headers:
+    Authorization: Bearer {rider_token}
+    Content-Type: application/json
+    Accept: application/json
+    
+    Request: {
+      "type": "home",              // home, work, other
+      "name": "Home",
+      "address": "123 Main Street, Lahore",
+      "place_name": "My Sweet Home",
+      "latitude": 31.5204,
+      "longitude": 74.3587,
+      "is_default": false
+    }
+    
+    Response: {
+      "status": "success",
+      "message": "Place saved successfully",
+      "data": {
+        "id": 1,
+        "rider_id": 3,
+        "type": "home",
+        "name": "Home",
+        ...
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+30. UPDATE SAVED PLACE (Custom places only)
+    PUT http://192.168.1.37:8000/api/v1/rider/saved-places/{id}
+    
+    Headers:
+    Authorization: Bearer {rider_token}
+    Content-Type: application/json
+    Accept: application/json
+    
+    Request: {
+      "name": "Updated Name",
+      "address": "New Address"
+    }
+    
+    Response: {
+      "status": "success",
+      "message": "Place updated successfully",
+      "data": {...}
+    }
+
+--------------------------------------------------------------------------------
+
+31. DELETE SAVED PLACE
+    DELETE http://192.168.1.37:8000/api/v1/rider/saved-places/{id}
+    
+    Headers:
+    Authorization: Bearer {rider_token}
+    Accept: application/json
+    
+    Response: {
+      "status": "success",
+      "message": "Place deleted successfully"
+    }
+
+--------------------------------------------------------------------------------
+
+32. GET RECENT SEARCHES
+    GET http://192.168.1.37:8000/api/v1/rider/recent-searches?limit=10
+    
+    Headers:
+    Authorization: Bearer {rider_token}
+    Accept: application/json
+    
+    Response: {
+      "status": "success",
+      "data": [
+        {
+          "id": 1,
+          "query_text": "Liberty Market",
+          "place_name": "Liberty Market, Gulberg",
+          "address": "Gulberg III, Lahore",
+          "latitude": 31.5204,
+          "longitude": 74.3483,
+          "search_type": "destination",
+          "searched_at": "2026-04-18 12:00:00"
+        }
+      ]
+    }
+
+--------------------------------------------------------------------------------
+
+33. SAVE RECENT SEARCH
+    POST http://192.168.1.37:8000/api/v1/rider/recent-searches
+    
+    Headers:
+    Authorization: Bearer {rider_token}
+    Content-Type: application/json
+    Accept: application/json
+    
+    Request: {
+      "query_text": "Packages Mall",
+      "place_name": "Packages Mall, Lahore",
+      "address": "Walton Road, Lahore",
+      "full_address": "Packages Mall, Walton Road, Lahore",
+      "latitude": 31.4810,
+      "longitude": 74.3226,
+      "place_id": "ChIJxxxxxxxxx",
+      "search_type": "destination"     // destination, stop, pickup
+    }
+    
+    Response: {
+      "status": "success",
+      "message": "Search saved",
+      "data": {...}
+    }
+
+--------------------------------------------------------------------------------
+
+34. CLEAR RECENT SEARCHES
+    DELETE http://192.168.1.37:8000/api/v1/rider/recent-searches
+    
+    Headers:
+    Authorization: Bearer {rider_token}
+    Accept: application/json
+    
+    Response: {
+      "status": "success",
+      "message": "Recent searches cleared"
+    }
+
+--------------------------------------------------------------------------------
+
+35. SEARCH LOCATIONS (Mock - Google Places Integration Ready)
+    GET http://192.168.1.37:8000/api/v1/rider/search-locations?query=Liberty
+    
+    Headers:
+    Authorization: Bearer {rider_token}
+    Accept: application/json
+    
+    Response: {
+      "status": "success",
+      "data": {
+        "query": "Liberty",
+        "results": [
+          {
+            "place_id": "ChIJxxxxxxxxxx1",
+            "name": "Liberty Market, Gulberg",
+            "address": "Liberty Market, Gulberg III, Lahore",
+            "latitude": 31.5204,
+            "longitude": 74.3483
+          }
+        ]
+      }
+    }
+
+================================================================================
+                    RIDE BOOKING APIS (NEW)
+================================================================================
+
+36. ESTIMATE FARE (Get all vehicle options with prices)
+    POST http://192.168.1.37:8000/api/v1/rider/estimate-fare
+    
+    Headers:
+    Authorization: Bearer {rider_token}
+    Content-Type: application/json
+    Accept: application/json
+    
+    Request: {
+      "pickup": {
+        "latitude": 31.5204,
+        "longitude": 74.3587
+      },
+      "destination": {
+        "latitude": 31.4810,
+        "longitude": 74.3226
+      },
+      "stops": [
+        {
+          "latitude": 31.5204,
+          "longitude": 74.3483
+        }
+      ]
+    }
+    
+    Response: {
+      "status": "success",
+      "data": {
+        "distance_km": 8.5,
+        "duration_minutes": 25,
+        "total_stops": 1,
+        "max_stops_allowed": 4,
+        "vehicle_options": [
+          {
+            "type": "bike",
+            "name": "Bike",
+            "capacity": 1,
+            "image": "/images/vehicles/bike.png",
+            "fare": {
+              "estimated": 106,
+              "base_fare": 30,
+              "distance_fare": 68,
+              "stop_charges": 20,
+              "surge_multiplier": 1
+            },
+            "eta_minutes": 3,
+            "is_available": true
+          },
+          {
+            "type": "economy",
+            "name": "Economy Car",
+            "capacity": 4,
+            "image": "/images/vehicles/economy.png",
+            "fare": {
+              "estimated": 312,
+              "base_fare": 80,
+              "distance_fare": 212.5,
+              "stop_charges": 20,
+              "surge_multiplier": 1
+            },
+            "eta_minutes": 4,
+            "is_available": true
+          },
+          {
+            "type": "business",
+            "name": "Comfort Car",
+            "capacity": 4,
+            "image": "/images/vehicles/comfort.png",
+            "fare": {
+              "estimated": 510,
+              "base_fare": 150,
+              "distance_fare": 340,
+              "stop_charges": 20,
+              "surge_multiplier": 1
+            },
+            "eta_minutes": 6,
+            "is_available": true
+          }
+        ]
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+37. BOOK RIDE (With pickup, destination, stops)
+    POST http://192.168.1.37:8000/api/v1/rider/book-ride
+    
+    Headers:
+    Authorization: Bearer {rider_token}
+    Content-Type: application/json
+    Accept: application/json
+    
+    Request: {
+      "pickup": {
+        "place_name": "Home",
+        "address": "Johar Town, Lahore",
+        "latitude": 31.5204,
+        "longitude": 74.3587
+      },
+      "destination": {
+        "place_name": "Office",
+        "address": "DHA Phase 6, Lahore",
+        "latitude": 31.4810,
+        "longitude": 74.3226
+      },
+      "stops": [
+        {
+          "place_name": "Liberty Market",
+          "address": "Gulberg, Lahore",
+          "latitude": 31.5204,
+          "longitude": 74.3483
+        }
+      ],
+      "ride_type": "economy",          // bike, auto, economy, business, car_pool
+      "payment_method": "cash"         // cash, wallet, card
+    }
+    
+    Response: {
+      "status": "success",
+      "message": "Ride booked successfully",
+      "data": {
+        "ride_id": 25,
+        "ride": {...},
+        "total_stops": 1,
+        "max_stops": 4,
+        "status": "searching_driver",
+        "estimated_fare": 312
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+38. GET RIDE DETAILS
+    GET http://192.168.1.37:8000/api/v1/rider/rides/{rideId}
+    
+    Headers:
+    Authorization: Bearer {rider_token}
+    Accept: application/json
+    
+    Response: {
+      "status": "success",
+      "data": {
+        "id": 25,
+        "status": "searching",
+        "pickup_address": "Johar Town, Lahore",
+        "destination_address": "DHA Phase 6, Lahore",
+        "stops": [...],
+        "driver": {...}
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+39. CANCEL RIDE
+    POST http://192.168.1.37:8000/api/v1/rider/rides/{rideId}/cancel
+    
+    Headers:
+    Authorization: Bearer {rider_token}
+    Accept: application/json
+    
+    Response: {
+      "status": "success",
+      "message": "Ride cancelled successfully"
     }
 
 ================================================================================

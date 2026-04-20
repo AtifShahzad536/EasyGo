@@ -1,9 +1,9 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="text-2xl font-bold text-gray-800 tracking-tight flex-shrink-0">Dashboard Overview</h2>
-    </x-slot>
+@extends('layouts.app')
 
-    <div class="space-y-6 pb-8">
+@section('title', 'Dashboard')
+
+@section('content')
+<div class="space-y-6 pb-8">
         <!-- Top KPI Cards Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <!-- Card 1: Total Rides Today -->
@@ -288,4 +288,4 @@
             });
         });
     </script>
-</x-app-layout>
+@endsection

@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Laravel') }} Dashboard</title>
+        <title>@yield('title', 'Dashboard') - {{ config('app.name', 'Laravel') }}</title>
 
         <!-- Fonts: Inter -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -180,7 +180,7 @@
                 <!-- Main Scrollable Body Content -->
                 <main class="flex-1 overflow-y-auto p-6 lg:p-8">
                     <div class="max-w-[1600px] mx-auto">
-                        {{ $slot }}
+                        @yield('content')
                     </div>
                 </main>
             </div>

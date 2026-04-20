@@ -1,11 +1,8 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center justify-between w-full">
-            <h2 class="text-2xl font-black text-gray-900 tracking-tight">Settings</h2>
-            
-           
-        </div>
-    </x-slot>
+@extends('layouts.app')
+
+@section('title', 'Settings')
+
+@section('content')
 
     <!-- Main Container with x-data for centralized state control -->
     <div class="space-y-8 max-w-6xl mx-auto pb-12" x-data="{ adminModalOpen: false }">
@@ -221,4 +218,4 @@
 
         @include('settings.partials.add-admin-modal')
     </div>
-</x-app-layout>
+@endsection

@@ -4,31 +4,55 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\ApiAuthController;
 use App\Http\Controllers\Auth\Api\DriverDocumentController;
-use App\Http\Controllers\Api\DriverStatisticController;
-use App\Http\Controllers\Api\DriverStatusApiController;
-use App\Http\Controllers\Api\UserLocationController;
-use App\Http\Controllers\Api\CarpoolRideController;
+
+// Driver API Controllers
+use App\Http\Controllers\Api\Driver\DriverStatisticController;
+use App\Http\Controllers\Api\Driver\DriverStatusController;
+use App\Http\Controllers\Api\Driver\DriverProfileController;
+
+// Rider API Controllers
+use App\Http\Controllers\Api\Rider\ProfileController as RiderProfileController;
+use App\Http\Controllers\Api\Rider\LocationController as RiderLocationController;
+use App\Http\Controllers\Api\Rider\RideBookingController;
+
+// Common API Controllers
+use App\Http\Controllers\Api\Common\LocationController;
+use App\Http\Controllers\Api\Common\CarpoolController;
 
 /*
 |--------------------------------------------------------------------------
 | API Routes — Easygo
 |--------------------------------------------------------------------------
-| Auth is role-based: drivers use 'auth:driver' guard,
-| riders use 'auth:rider' guard via Laravel Sanctum.
+| Auth is role-based via Laravel Sanctum
+|--------------------------------------------------------------------------
+| Structure:
+|   /v1/auth/*     → Public (no token)
+|   /v1/driver/*   → Driver protected
+|   /v1/rider/*    → Rider protected
 */
 
-// ─── Public Auth (no token required) ────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// PUBLIC AUTHENTICATION ROUTES
+// ═══════════════════════════════════════════════════════════════════════════════
 Route::prefix('v1/auth')->group(function () {
+    // Registration & Login
     Route::post('/register', [ApiAuthController::class, 'register']);
-    Route::post('/login',    [ApiAuthController::class, 'login']);
+    Route::post('/login', [ApiAuthController::class, 'login']);
 
-    // Phone number existence check (no auth required)
+    // Phone number checks
     Route::post('/check-driver-phone', [ApiAuthController::class, 'checkDriverPhone']);
     Route::post('/check-rider-phone', [ApiAuthController::class, 'checkRiderPhone']);
 });
 
-// ─── Driver Protected Routes ─────────────────────────────────────────────────
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DRIVER PROTECTED ROUTES
+// ═══════════════════════════════════════════════════════════════════════════════
 Route::middleware('auth:sanctum')->prefix('v1/driver')->group(function () {
+
+    // ─────────────────────────────────────────────────────────────────
+    // Profile & Account
+    // ─────────────────────────────────────────────────────────────────
     Route::get('/me', function (Request $request) {
         $user = $request->user();
         $userData = $user->toArray();
@@ -37,51 +61,96 @@ Route::middleware('auth:sanctum')->prefix('v1/driver')->group(function () {
         }
         return response()->json(['user' => $userData, 'role' => 'driver']);
     });
-    // Step 3: Register vehicle details (requires auth)
+
     Route::post('/vehicle/register', [ApiAuthController::class, 'registerVehicle']);
     Route::post('/documents/upload', [DriverDocumentController::class, 'bulkUpload']);
 
-    // ─── Driver Statistics API ──────────────────────────────────────────────
-    Route::get('/statistics', [DriverStatisticController::class, 'getMyStatistics']);
-    Route::get('/statistics/dashboard', [DriverStatisticController::class, 'getDashboardSummary']);
-    Route::get('/statistics/trips', [DriverStatisticController::class, 'getTripStatistics']);
-    Route::get('/statistics/earnings', [DriverStatisticController::class, 'getEarningsHistory']);
-    Route::post('/statistics/update', [DriverStatisticController::class, 'updateStatistics']);
+    // ─────────────────────────────────────────────────────────────────
+    // Status & Location
+    // ─────────────────────────────────────────────────────────────────
+    Route::get('/status', [DriverStatusController::class, 'getStatus']);
+    Route::post('/status/update', [DriverStatusController::class, 'updateStatus']);
 
-    // ─── Driver Status API ───────────────────────────────────────────────────
-    Route::get('/status', [DriverStatusApiController::class, 'getStatus']);
-    Route::post('/status/update', [DriverStatusApiController::class, 'updateStatus']);
+    Route::get('/location', [LocationController::class, 'getLocation']);
+    Route::post('/location/update', [LocationController::class, 'updateLocation']);
 
-    // ─── Driver Location API ─────────────────────────────────────────────────
-    Route::get('/location', [UserLocationController::class, 'getLocation']);
-    Route::post('/location/update', [UserLocationController::class, 'updateLocation']);
-
-    // ─── Carpool Ride APIs ───────────────────────────────────────────────────
-    Route::post('/carpool/publish', [CarpoolRideController::class, 'publishRide']);
-    Route::get('/carpool/my-rides', [CarpoolRideController::class, 'myRides']);
-    Route::post('/carpool/cancel/{rideId}', [CarpoolRideController::class, 'cancelRide']);
-    Route::put('/carpool/edit/{rideId}', [CarpoolRideController::class, 'editRide']);
-    Route::delete('/carpool/delete/{rideId}', [CarpoolRideController::class, 'deleteRide']);
-});
-
-// ─── Rider Protected Routes ───────────────────────────────────────────────────
-Route::middleware('auth:sanctum')->prefix('v1/rider')->group(function () {
-    Route::get('/me', function (Request $request) {
-        $user = $request->user();
-        $userData = $user->toArray();
-        if ($user->profile_photo) {
-            $userData['profile_photo_url'] = asset('storage/' . $user->profile_photo);
-        }
-        return response()->json(['user' => $userData, 'role' => 'rider']);
+    // ─────────────────────────────────────────────────────────────────
+    // Statistics
+    // ─────────────────────────────────────────────────────────────────
+    Route::prefix('/statistics')->group(function () {
+        Route::get('/', [DriverStatisticController::class, 'getMyStatistics']);
+        Route::get('/dashboard', [DriverStatisticController::class, 'getDashboardSummary']);
+        Route::get('/trips', [DriverStatisticController::class, 'getTripStatistics']);
+        Route::get('/earnings', [DriverStatisticController::class, 'getEarningsHistory']);
+        Route::post('/update', [DriverStatisticController::class, 'updateStatistics']);
     });
 
-    // ─── Rider Location API ──────────────────────────────────────────────────
-    Route::get('/location', [UserLocationController::class, 'getLocation']);
-    Route::post('/location/update', [UserLocationController::class, 'updateLocation']);
+    // ─────────────────────────────────────────────────────────────────
+    // Carpool Rides
+    // ─────────────────────────────────────────────────────────────────
+    Route::prefix('/carpool')->group(function () {
+        Route::post('/publish', [CarpoolController::class, 'publishRide']);
+        Route::get('/my-rides', [CarpoolController::class, 'myRides']);
+        Route::put('/edit/{rideId}', [CarpoolController::class, 'editRide']);
+        Route::post('/cancel/{rideId}', [CarpoolController::class, 'cancelRide']);
+        Route::delete('/delete/{rideId}', [CarpoolController::class, 'deleteRide']);
+    });
+});
 
-    // ─── Find Nearby Drivers (for rider to book ride) ────────────────────────
-    Route::get('/drivers/nearby', [UserLocationController::class, 'findNearbyDrivers']);
 
-    // ─── Search Available Carpool Rides ─────────────────────────────────────
-    Route::get('/carpool/search', [CarpoolRideController::class, 'availableRides']);
+// ═══════════════════════════════════════════════════════════════════════════════
+// RIDER PROTECTED ROUTES
+// ═══════════════════════════════════════════════════════════════════════════════
+Route::middleware('auth:sanctum')->prefix('v1/rider')->group(function () {
+
+    // ─────────────────────────────────────────────────────────────────
+    // Profile & Account (WITHOUT display_name in response)
+    // ─────────────────────────────────────────────────────────────────
+    Route::get('/profile', [RiderProfileController::class, 'getProfile']);
+    Route::post('/profile/update', [RiderProfileController::class, 'updateProfile']);
+
+    // ─────────────────────────────────────────────────────────────────
+    // Location & Nearby
+    // ─────────────────────────────────────────────────────────────────
+    Route::get('/location', [LocationController::class, 'getLocation']);
+    Route::post('/location/update', [LocationController::class, 'updateLocation']);
+    Route::get('/drivers/nearby', [LocationController::class, 'findNearbyDrivers']);
+
+    // ─────────────────────────────────────────────────────────────────
+    // Carpool Search
+    // ─────────────────────────────────────────────────────────────────
+    Route::get('/carpool/search', [CarpoolController::class, 'availableRides']);
+
+    // ─────────────────────────────────────────────────────────────────
+    // Destination & Saved Places
+    // ─────────────────────────────────────────────────────────────────
+    Route::get('/destination-screen', [RiderLocationController::class, 'getDestinationScreenData']);
+
+    // Saved Places
+    Route::prefix('/saved-places')->group(function () {
+        Route::get('/', [RiderLocationController::class, 'getSavedPlaces']);
+        Route::post('/', [RiderLocationController::class, 'savePlace']);
+        Route::put('/{id}', [RiderLocationController::class, 'updatePlace']);
+        Route::delete('/{id}', [RiderLocationController::class, 'deletePlace']);
+    });
+
+    // Recent Searches
+    Route::prefix('/recent-searches')->group(function () {
+        Route::get('/', [RiderLocationController::class, 'getRecentSearches']);
+        Route::post('/', [RiderLocationController::class, 'saveRecentSearch']);
+        Route::delete('/{id}', [RiderLocationController::class, 'deleteRecentSearch']);
+        Route::delete('/', [RiderLocationController::class, 'clearRecentSearches']);
+    });
+
+    // Location Search
+    Route::get('/search-locations', [RiderLocationController::class, 'searchLocations']);
+    Route::get('/place-details/{place_id}', [RiderLocationController::class, 'getPlaceDetails']);
+
+    // ─────────────────────────────────────────────────────────────────
+    // Ride Booking (with Stops - Max 4)
+    // ─────────────────────────────────────────────────────────────────
+    Route::post('/estimate-fare', [RideBookingController::class, 'estimateFare']);
+    Route::post('/book-ride', [RideBookingController::class, 'bookRide']);
+    Route::get('/rides/{rideId}', [RideBookingController::class, 'getRideDetails']);
+    Route::post('/rides/{rideId}/cancel', [RideBookingController::class, 'cancelRide']);
 });

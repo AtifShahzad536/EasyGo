@@ -173,7 +173,8 @@ class ApiAuthController extends Controller
                 // 1. Create Driver
                 $data             = $request->except(['profile_photo', 'role', 'vehicle', 'documents']);
                 $data['password'] = Hash::make(Str::random(16));
-                $data['status']   = 'pending_verification';
+                $data['status']   = 'offline'; // Valid ENUM: offline, online, on_trip, suspended, banned
+                $data['kyc_status'] = 'pending'; // Valid ENUM: pending, in_review, approved, rejected
 
                 if ($request->hasFile('profile_photo')) {
                     $data['profile_photo'] = $request->file('profile_photo')->store('profile_photos/drivers', 'public');
@@ -243,7 +244,8 @@ class ApiAuthController extends Controller
                         'driver_id'          => $driver->id,
                         'vehicle_id'         => $vehicle->id,
                         'documents_uploaded' => count($uploadedDocuments),
-                        'status'             => 'pending_verification',
+                        'driver_status'      => 'offline',
+                        'kyc_status'         => 'pending',
                         'next_step'          => 'Wait for admin verification',
                     ],
                 ], 201);

@@ -1,21 +1,22 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\RiderController;
-use App\Http\Controllers\DriverController;
-use App\Http\Controllers\FileController;
-use App\Http\Controllers\LiveRideController;
-use App\Http\Controllers\RideHistoryController;
-use App\Http\Controllers\ScheduledRideController;
-use App\Http\Controllers\TransactionController;
-use App\Http\Controllers\PayoutController;
-use App\Http\Controllers\WalletController;
-use App\Http\Controllers\PromotionController;
-use App\Http\Controllers\ReviewController;
-use App\Http\Controllers\ReportController;
-use App\Http\Controllers\DriverStatusController;
-use App\Http\Controllers\SettingsController;
-use App\Http\Controllers\Admin\AdminDocumentController;
+use App\Http\Controllers\Web\DashboardController;
+use App\Http\Controllers\Web\DriverStatusController;
+use App\Http\Controllers\Web\FileController;
+use App\Http\Controllers\Web\SettingsController;
+use App\Http\Controllers\Admin\UserManagement\DriverController;
+use App\Http\Controllers\Admin\UserManagement\RiderController;
+use App\Http\Controllers\Admin\UserManagement\DriverDocumentController;
+use App\Http\Controllers\Admin\RideManagement\LiveRideController;
+use App\Http\Controllers\Admin\RideManagement\RideHistoryController;
+use App\Http\Controllers\Admin\RideManagement\ScheduledRideController;
+use App\Http\Controllers\Admin\Finance\TransactionController;
+use App\Http\Controllers\Admin\Finance\PayoutController;
+use App\Http\Controllers\Admin\Finance\WalletController;
+use App\Http\Controllers\Admin\Settings\PromotionController;
+use App\Http\Controllers\Admin\Settings\ReviewController;
+use App\Http\Controllers\Admin\Settings\ReportController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -27,8 +28,8 @@ Route::get('/', function () {
 });
 
 Route::prefix('admin')->middleware('auth')->group(function () {
-    Route::patch('/driver-documents/{id}/approve', [AdminDocumentController::class, 'approve'])->name('admin.documents.approve');
-    Route::patch('/driver-documents/{id}/reject', [AdminDocumentController::class, 'reject'])->name('admin.documents.reject');
+    Route::patch('/driver-documents/{id}/approve', [DriverDocumentController::class, 'approve'])->name('admin.documents.approve');
+    Route::patch('/driver-documents/{id}/reject', [DriverDocumentController::class, 'reject'])->name('admin.documents.reject');
 });
 
 Route::get('/dashboard', function () {
