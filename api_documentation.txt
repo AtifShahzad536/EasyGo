@@ -240,7 +240,7 @@
 --------------------------------------------------------------------------------
 
 10. UPDATE DRIVER STATUS
-    POST http://192.168.1.37:8000/api/v1/driver/status/update
+    PUT http://192.168.1.37:8000/api/v1/driver/status
     
     Headers:
     Authorization: Bearer {token}
@@ -262,11 +262,122 @@
       }
     }
 
+--------------------------------------------------------------------------------
+
+10A. GET DRIVER STATUS
+    GET http://192.168.1.37:8000/api/v1/driver/status
+    
+    Headers:
+    Authorization: Bearer {token}
+    
+    Response: {
+      "status": "success",
+      "data": {
+        "driver_id": 1,
+        "status": "online",
+        "is_available": true,
+        "last_updated": "2025-04-15 12:30:00"
+      }
+    }
+
+================================================================================
+                        DRIVER PROFILE APIS
+================================================================================
+
+11. GET DRIVER PROFILE
+    GET http://192.168.1.37:8000/api/v1/driver/profile
+    
+    Headers:
+    Authorization: Bearer {driver_token}
+    Content-Type: application/json
+    
+    Response: {
+      "status": "success",
+      "data": {
+        "id": 1,
+        "full_name": "Ahmed Khan",
+        "mobile_number": "03001234567",
+        "email": "ahmed@example.com",
+        "profile_photo": "http://localhost:8000/storage/profile_photos/drivers/xxx.jpg",
+        "cnic": "35201-1234567-8",
+        "cnic_name": "Ahmed Khan",
+        "date_of_birth": "1990-05-15",
+        "gender": "male",
+        "status": "active",
+        "kyc_status": "verified",
+        "is_available": true,
+        "created_at": "2026-01-15 10:30:00"
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+12. UPDATE DRIVER PROFILE
+    PUT http://192.168.1.37:8000/api/v1/driver/profile
+    
+    Headers:
+    Authorization: Bearer {driver_token}
+    Content-Type: application/json
+    
+    Body:
+    {
+      "full_name": "Ahmed Ali Khan",
+      "email": "ahmed.ali@example.com",
+      "gender": "male",
+      "date_of_birth": "1990-05-15"
+    }
+    
+    Response: {
+      "status": "success",
+      "message": "Profile updated successfully",
+      "data": {
+        "id": 1,
+        "full_name": "Ahmed Ali Khan",
+        "mobile_number": "03001234567",
+        "email": "ahmed.ali@example.com",
+        "profile_photo": "http://localhost:8000/storage/profile_photos/drivers/xxx.jpg",
+        "gender": "male",
+        "date_of_birth": "1990-05-15",
+        "updated_at": "2026-04-21 10:15:00"
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+12A. UPDATE DRIVER PROFILE (Form-Data with Photo)
+    PUT http://192.168.1.37:8000/api/v1/driver/profile
+    
+    Headers:
+    Authorization: Bearer {driver_token}
+    Content-Type: multipart/form-data
+    
+    Body (form-data):
+    - full_name: Ahmed Ali Khan
+    - email: ahmed.ali@example.com
+    - gender: male
+    - date_of_birth: 1990-05-15
+    - profile_photo: [file upload]
+    
+    Response: {
+      "status": "success",
+      "message": "Profile updated successfully",
+      "data": {
+        "id": 1,
+        "full_name": "Ahmed Ali Khan",
+        "mobile_number": "03001234567",
+        "email": "ahmed.ali@example.com",
+        "profile_photo": "http://localhost:8000/storage/profile_photos/drivers/xxx.jpg",
+        "gender": "male",
+        "date_of_birth": "1990-05-15",
+        "updated_at": "2026-04-21 10:15:00"
+      }
+    }
+
 ================================================================================
                         LOCATION APIS (DRIVER & RIDER)
 ================================================================================
 
-11. UPDATE DRIVER LOCATION
+13. UPDATE DRIVER LOCATION
     POST http://192.168.1.37:8000/api/v1/driver/location/update
     
     Headers:
@@ -532,22 +643,53 @@
 
 --------------------------------------------------------------------------------
 
-20B. UPDATE RIDER PROFILE
-    POST http://192.168.1.37:8000/api/v1/rider/profile/update
+20B. UPDATE RIDER PROFILE (JSON)
+    PUT http://192.168.1.37:8000/api/v1/rider/profile
+    
+    Headers:
+    Authorization: Bearer {rider_token}
+    Content-Type: application/json
+    Accept: application/json
+    
+    Body:
+    {
+      "full_name": "Ali Khan Updated",
+      "email": "ali.new@example.com",
+      "gender": "male",
+      "date_of_birth": "1995-05-15"
+    }
+    
+    Response: {
+      "status": "success",
+      "message": "Profile updated successfully",
+      "data": {
+        "id": 1,
+        "full_name": "Ali Khan Updated",
+        "mobile_number": "03001234567",
+        "email": "ali.new@example.com",
+        "profile_photo": "http://192.168.1.37:8000/storage/profile_photos/riders/xxxxx.jpg",
+        "gender": "male",
+        "date_of_birth": "1995-05-15",
+        "updated_at": "2025-04-20 11:30:00"
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+20C. UPDATE RIDER PROFILE (Form-Data with Photo)
+    PUT http://192.168.1.37:8000/api/v1/rider/profile
     
     Headers:
     Authorization: Bearer {rider_token}
     Content-Type: multipart/form-data
     Accept: application/json
     
-    Body (send only fields you want to update):
-    {
-      "full_name": "Ali Khan Updated",
-      "email": "ali.new@example.com",
-      "gender": "male",
-      "date_of_birth": "1995-05-15",
-      "profile_photo": [file upload]
-    }
+    Body (form-data):
+    - full_name: Ali Khan Updated
+    - email: ali.new@example.com
+    - gender: male
+    - date_of_birth: 1995-05-15
+    - profile_photo: [file upload]
     
     Response: {
       "status": "success",

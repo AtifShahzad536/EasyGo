@@ -31,13 +31,13 @@ class DriverProfileController extends Controller
                 'mobile_number' => $driver->mobile_number,
                 'email' => $driver->email,
                 'profile_photo' => $driver->profile_photo ? asset('storage/' . $driver->profile_photo) : null,
-                'cnic_number' => $driver->cnic_number,
+                'cnic' => $driver->cnic,
+                'cnic_name' => $driver->cnic_name,
                 'date_of_birth' => $driver->date_of_birth,
                 'gender' => $driver->gender,
                 'status' => $driver->status,
                 'kyc_status' => $driver->kyc_status,
-                'current_balance' => $driver->current_balance,
-                'total_earnings' => $driver->total_earnings,
+                'is_available' => $driver->is_available,
                 'created_at' => $driver->created_at?->toDateTimeString(),
             ],
         ]);
@@ -49,10 +49,35 @@ class DriverProfileController extends Controller
     public function updateProfile(Request $request): JsonResponse
     {
         $driver = $request->user();
+        $driverId = $driver->id;
+
+        // Handle form-data on PUT requests
+        if ($request->isMethod('put') || $request->isMethod('patch')) {
+            $contentType = $request->header('Content-Type', '');
+            if (strpos($contentType, 'multipart/form-data') !== false) {
+                $input = file_get_contents('php://input');
+                if (!empty($input)) {
+                    $boundary = explode('boundary=', $contentType)[1] ?? '';
+                    if ($boundary) {
+                        $parts = explode('--' . $boundary, $input);
+                        foreach ($parts as $part) {
+                            if (strpos($part, 'Content-Disposition: form-data; name="') !== false) {
+                                preg_match('/name="([^"]+)"/', $part, $nameMatch);
+                                if ($nameMatch) {
+                                    $fieldName = $nameMatch[1];
+                                    $value = substr($part, strpos($part, "\r\n\r\n") + 4, -2);
+                                    $request->merge([$fieldName => $value]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         $validator = Validator::make($request->all(), [
             'full_name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|unique:drivers,email,' . $driver->id,
+            'email' => 'sometimes|email|unique:drivers,email,' . $driverId,
             'gender' => 'sometimes|in:male,female,other',
             'date_of_birth' => 'sometimes|date|before:today',
             'profile_photo' => 'sometimes|image|mimes:jpg,jpeg,png|max:2048',
@@ -66,6 +91,9 @@ class DriverProfileController extends Controller
             ], 422);
         }
 
+        // Re-fetch fresh instance from database
+        $driver = Driver::find($driverId);
+
         // Handle profile photo upload
         if ($request->hasFile('profile_photo')) {
             if ($driver->profile_photo && Storage::disk('public')->exists($driver->profile_photo)) {
@@ -75,15 +103,22 @@ class DriverProfileController extends Controller
             $driver->profile_photo = $path;
         }
 
-        // Update fields
-        $fields = ['full_name', 'email', 'gender', 'date_of_birth'];
-        foreach ($fields as $field) {
-            if ($request->has($field)) {
-                $driver->$field = $request->$field;
-            }
+        // Update fields using filled() for proper form-data handling
+        if ($request->filled('full_name')) {
+            $driver->full_name = $request->full_name;
+        }
+        if ($request->filled('email')) {
+            $driver->email = $request->email;
+        }
+        if ($request->filled('gender')) {
+            $driver->gender = $request->gender;
+        }
+        if ($request->filled('date_of_birth')) {
+            $driver->date_of_birth = $request->date_of_birth;
         }
 
         $driver->save();
+        $driver->refresh();
 
         return response()->json([
             'status' => 'success',
@@ -94,6 +129,8 @@ class DriverProfileController extends Controller
                 'mobile_number' => $driver->mobile_number,
                 'email' => $driver->email,
                 'profile_photo' => $driver->profile_photo ? asset('storage/' . $driver->profile_photo) : null,
+                'gender' => $driver->gender,
+                'date_of_birth' => $driver->date_of_birth,
                 'updated_at' => $driver->updated_at->toDateTimeString(),
             ],
         ]);

@@ -48,10 +48,36 @@ class RiderProfileController extends Controller
     public function updateProfile(Request $request): JsonResponse
     {
         $rider = $request->user();
+        $riderId = $rider->id;
+
+        // Handle form-data on PUT requests (PHP doesn't parse it automatically)
+        if ($request->isMethod('put') || $request->isMethod('patch')) {
+            $contentType = $request->header('Content-Type', '');
+            if (strpos($contentType, 'multipart/form-data') !== false) {
+                // Parse form-data from php://input
+                $input = file_get_contents('php://input');
+                if (!empty($input)) {
+                    $boundary = explode('boundary=', $contentType)[1] ?? '';
+                    if ($boundary) {
+                        $parts = explode('--' . $boundary, $input);
+                        foreach ($parts as $part) {
+                            if (strpos($part, 'Content-Disposition: form-data; name="') !== false) {
+                                preg_match('/name="([^"]+)"/', $part, $nameMatch);
+                                if ($nameMatch) {
+                                    $fieldName = $nameMatch[1];
+                                    $value = substr($part, strpos($part, "\r\n\r\n") + 4, -2);
+                                    $request->merge([$fieldName => $value]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         $validator = Validator::make($request->all(), [
             'full_name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|unique:riders,email,' . $rider->id,
+            'email' => 'sometimes|email|unique:riders,email,' . $riderId,
             'gender' => 'sometimes|in:male,female,other',
             'date_of_birth' => 'sometimes|date|before:today',
             'profile_photo' => 'sometimes|image|mimes:jpg,jpeg,png|max:2048',
@@ -64,6 +90,9 @@ class RiderProfileController extends Controller
                 'errors' => $validator->errors(),
             ], 422);
         }
+
+        // Re-fetch fresh instance from database
+        $rider = Rider::find($riderId);
 
         // Handle profile photo upload
         if ($request->hasFile('profile_photo')) {
@@ -78,20 +107,21 @@ class RiderProfileController extends Controller
         }
 
         // Update other fields
-        if ($request->has('full_name')) {
+        if ($request->filled('full_name')) {
             $rider->full_name = $request->full_name;
         }
-        if ($request->has('email')) {
+        if ($request->filled('email')) {
             $rider->email = $request->email;
         }
-        if ($request->has('gender')) {
+        if ($request->filled('gender')) {
             $rider->gender = $request->gender;
         }
-        if ($request->has('date_of_birth')) {
+        if ($request->filled('date_of_birth')) {
             $rider->date_of_birth = $request->date_of_birth;
         }
 
         $rider->save();
+        $rider->refresh();
 
         // Return updated profile (without display_name)
         return response()->json([

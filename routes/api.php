@@ -11,8 +11,8 @@ use App\Http\Controllers\Api\Driver\DriverStatusController;
 use App\Http\Controllers\Api\Driver\DriverProfileController;
 
 // Rider API Controllers
-use App\Http\Controllers\Api\Rider\ProfileController as RiderProfileController;
-use App\Http\Controllers\Api\Rider\LocationController as RiderLocationController;
+use App\Http\Controllers\Api\Rider\RiderProfileController;
+use App\Http\Controllers\Api\Rider\RiderLocationController;
 use App\Http\Controllers\Api\Rider\RideBookingController;
 
 // Common API Controllers
@@ -62,6 +62,10 @@ Route::middleware('auth:sanctum')->prefix('v1/driver')->group(function () {
         return response()->json(['user' => $userData, 'role' => 'driver']);
     });
 
+    // Driver Profile APIs
+    Route::get('/profile', [DriverProfileController::class, 'getProfile']);
+    Route::put('/profile', [DriverProfileController::class, 'updateProfile']);
+
     Route::post('/vehicle/register', [ApiAuthController::class, 'registerVehicle']);
     Route::post('/documents/upload', [DriverDocumentController::class, 'bulkUpload']);
 
@@ -69,7 +73,7 @@ Route::middleware('auth:sanctum')->prefix('v1/driver')->group(function () {
     // Status & Location
     // ─────────────────────────────────────────────────────────────────
     Route::get('/status', [DriverStatusController::class, 'getStatus']);
-    Route::post('/status/update', [DriverStatusController::class, 'updateStatus']);
+    Route::put('/status', [DriverStatusController::class, 'updateStatus']);
 
     Route::get('/location', [LocationController::class, 'getLocation']);
     Route::post('/location/update', [LocationController::class, 'updateLocation']);
@@ -107,7 +111,7 @@ Route::middleware('auth:sanctum')->prefix('v1/rider')->group(function () {
     // Profile & Account (WITHOUT display_name in response)
     // ─────────────────────────────────────────────────────────────────
     Route::get('/profile', [RiderProfileController::class, 'getProfile']);
-    Route::post('/profile/update', [RiderProfileController::class, 'updateProfile']);
+    Route::put('/profile', [RiderProfileController::class, 'updateProfile']);
 
     // ─────────────────────────────────────────────────────────────────
     // Location & Nearby
